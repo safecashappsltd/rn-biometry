@@ -169,10 +169,10 @@ class RnBiometryModule(reactContext: ReactApplicationContext?) : ReactContextBas
         object : Runnable {
           override fun run() {
             try {
-              val promptMessage: String = params.getString("promptMessage")
-              val cancelButtonText: String = params.getString("cancelButtonText")
+              val promptMessage: String? = params.getString("promptMessage")
+              val cancelButtonText: String? = params.getString("cancelButtonText")
               val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
-              val authCallback: AuthenticationCallback = SimplePromptCallback(promise)
+              val authCallback: SimplePromptCallback = SimplePromptCallback(promise)
               val fragmentActivity: FragmentActivity = getCurrentActivity() as FragmentActivity
               val executor: Executor = Executors.newSingleThreadExecutor()
               val biometricPrompt = BiometricPrompt(fragmentActivity, executor, authCallback)
