@@ -19,6 +19,9 @@ import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeMap
 import java.security.KeyPairGenerator
+import java.security.KeyStore
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 class RnBiometryModule(reactContext: ReactApplicationContext?) : ReactContextBaseJavaModule(reactContext) {
   protected var biometricKeyAlias = "biometric_key"
@@ -141,14 +144,14 @@ class RnBiometryModule(reactContext: ReactApplicationContext?) : ReactContextBas
 //    }
 //  }
 
-  private fun getPromptInfo(promptMessage: String, cancelButtonText: String, allowDeviceCredentials: Boolean): PromptInfo {
-    val builder: PromptInfo.Builder = Builder().setTitle(promptMessage)
-    builder.setAllowedAuthenticators(getAllowedAuthenticators(allowDeviceCredentials))
-    if (allowDeviceCredentials == false || isCurrentSDK29OrEarlier) {
-      builder.setNegativeButtonText(cancelButtonText)
-    }
-    return builder.build()
-  }
+//  private fun getPromptInfo(promptMessage: String, cancelButtonText: String, allowDeviceCredentials: Boolean): PromptInfo {
+//    val builder: PromptInfo.Builder = Builder().setTitle(promptMessage)
+//    builder.setAllowedAuthenticators(getAllowedAuthenticators(allowDeviceCredentials))
+//    if (allowDeviceCredentials == false || isCurrentSDK29OrEarlier) {
+//      builder.setNegativeButtonText(cancelButtonText)
+//    }
+//    return builder.build()
+//  }
 
   private fun getAllowedAuthenticators(allowDeviceCredentials: Boolean): Int {
     return if (allowDeviceCredentials && !isCurrentSDK29OrEarlier) {
