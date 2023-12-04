@@ -18,13 +18,11 @@ import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeMap
 
-/**
- * Created by brandon on 4/5/18.
- */
 class ReactNativeBiometrics(reactContext: ReactApplicationContext?) : ReactContextBaseJavaModule(reactContext) {
   protected var biometricKeyAlias = "biometric_key"
-  val name: String
-    get() = "ReactNativeBiometrics"
+
+    // add to CalendarModule.kt
+    override fun getName() = "CalendarModule"
 
   @ReactMethod
   fun isSensorAvailable(params: ReadableMap, promise: Promise) {
@@ -140,6 +138,29 @@ class ReactNativeBiometrics(reactContext: ReactApplicationContext?) : ReactConte
         })
     } else {
       promise.reject("Cannot generate keys on android versions below 6.0", "Cannot generate keys on android versions below 6.0")
+    }
+  }
+
+  @ReactMethod
+  fun getPrivateKey(promise: Promise) {
+    if (isCurrentSDKMarshmallowOrLater) {
+      UiThreadUtil.runOnUiThread(object : Runnable {
+        override fun run() {
+          try {
+            val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
+            keyStore.load(null)
+            val privateKey: PrivateKey = keyStore.getKey(biometricKeyAlias, null) as PrivateKey
+
+            // Convert the private key to a string format (e.g., Base64)
+            val privateKeyString: String = Base64.encodeToString(privateKey.getEncoded(), Base64.DEFAULT)
+            promise.resolve(privateKeyString)
+          } catch (e: Exception) {
+            promise.reject("Error retrieving private key: " + e.message, "Error retrieving private key: " + e.message)
+          }
+        }
+      })
+    } else {
+      promise.reject("Cannot retrieve keys on android versions below 6.0", "Cannot retrieve keys on android versions below 6.0")
     }
   }
 
