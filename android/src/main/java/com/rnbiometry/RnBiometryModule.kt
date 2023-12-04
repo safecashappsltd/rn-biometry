@@ -1,4 +1,4 @@
-package com.rnbiometrics
+package com.rnbiometry
 
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
@@ -17,12 +17,11 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeMap
+import java.security.KeyPairGenerator
 
-class ReactNativeBiometrics(reactContext: ReactApplicationContext?) : ReactContextBaseJavaModule(reactContext) {
+class RnBiometryModule(reactContext: ReactApplicationContext?) : ReactContextBaseJavaModule(reactContext) {
   protected var biometricKeyAlias = "biometric_key"
-
-    // add to CalendarModule.kt
-    override fun getName() = "CalendarModule"
+    override fun getName() = "RnBiometryModule"
 
   @ReactMethod
   fun isSensorAvailable(params: ReadableMap, promise: Promise) {
