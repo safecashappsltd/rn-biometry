@@ -1,5 +1,6 @@
 package com.rnbiometry
 
+import SimplePromptCallback
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -58,34 +59,34 @@ class RnBiometryModule(reactContext: ReactApplicationContext?) : ReactContextBas
     }
   }
 
-  @ReactMethod
-  fun createKeys(params: ReadableMap?, promise: Promise) {
-    try {
-      if (isCurrentSDKMarshmallowOrLater) {
-        deleteBiometricKey()
-        val keyPairGenerator: KeyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
-        val keyGenParameterSpec: KeyGenParameterSpec = Builder(biometricKeyAlias, KeyProperties.PURPOSE_SIGN)
-          .setDigests(KeyProperties.DIGEST_SHA256)
-          .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-          .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
-          .setUserAuthenticationRequired(true)
-          .build()
-        keyPairGenerator.initialize(keyGenParameterSpec)
-        val keyPair: KeyPair = keyPairGenerator.generateKeyPair()
-        val publicKey: PublicKey = keyPair.getPublic()
-        val encodedPublicKey: ByteArray = publicKey.getEncoded()
-        var publicKeyString: String = Base64.encodeToString(encodedPublicKey, Base64.DEFAULT)
-        publicKeyString = publicKeyString.replace("\r".toRegex(), "").replace("\n".toRegex(), "")
-        val resultMap: WritableMap = WritableNativeMap()
-        resultMap.putString("publicKey", publicKeyString)
-        promise.resolve(resultMap)
-      } else {
-        promise.reject("Cannot generate keys on android versions below 6.0", "Cannot generate keys on android versions below 6.0")
-      }
-    } catch (e: Exception) {
-      promise.reject("Error generating public private keys: " + e.message, "Error generating public private keys")
-    }
-  }
+//  @ReactMethod
+//  fun createKeys(params: ReadableMap?, promise: Promise) {
+//    try {
+//      if (isCurrentSDKMarshmallowOrLater) {
+//        deleteBiometricKey()
+//        val keyPairGenerator: KeyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
+//        val keyGenParameterSpec: KeyGenParameterSpec = Builder(biometricKeyAlias, KeyProperties.PURPOSE_SIGN)
+//          .setDigests(KeyProperties.DIGEST_SHA256)
+//          .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+//          .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
+//          .setUserAuthenticationRequired(true)
+//          .build()
+//        keyPairGenerator.initialize(keyGenParameterSpec)
+//        val keyPair: KeyPair = keyPairGenerator.generateKeyPair()
+//        val publicKey: PublicKey = keyPair.getPublic()
+//        val encodedPublicKey: ByteArray = publicKey.getEncoded()
+//        var publicKeyString: String = Base64.encodeToString(encodedPublicKey, Base64.DEFAULT)
+//        publicKeyString = publicKeyString.replace("\r".toRegex(), "").replace("\n".toRegex(), "")
+//        val resultMap: WritableMap = WritableNativeMap()
+//        resultMap.putString("publicKey", publicKeyString)
+//        promise.resolve(resultMap)
+//      } else {
+//        promise.reject("Cannot generate keys on android versions below 6.0", "Cannot generate keys on android versions below 6.0")
+//      }
+//    } catch (e: Exception) {
+//      promise.reject("Error generating public private keys: " + e.message, "Error generating public private keys")
+//    }
+//  }
 
   private val isCurrentSDKMarshmallowOrLater: Boolean
     private get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
@@ -108,60 +109,37 @@ class RnBiometryModule(reactContext: ReactApplicationContext?) : ReactContextBas
     }
   }
 
-  @ReactMethod
-  fun createSignature(params: ReadableMap, promise: Promise) {
-    if (isCurrentSDKMarshmallowOrLater) {
-      UiThreadUtil.runOnUiThread(
-        object : Runnable {
-          override fun run() {
-            try {
-              val promptMessage: String = params.getString("promptMessage")
-              val payload: String = params.getString("payload")
-              val cancelButtonText: String = params.getString("cancelButtonText")
-              val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
-              val signature: java.security.Signature = java.security.Signature.getInstance("SHA256withRSA")
-              val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-              keyStore.load(null)
-              val privateKey: PrivateKey = keyStore.getKey(biometricKeyAlias, null) as PrivateKey
-              signature.initSign(privateKey)
-              val cryptoObject: BiometricPrompt.CryptoObject = CryptoObject(signature)
-              val authCallback: AuthenticationCallback = CreateSignatureCallback(promise, payload)
-              val fragmentActivity: FragmentActivity = getCurrentActivity() as FragmentActivity
-              val executor: Executor = Executors.newSingleThreadExecutor()
-              val biometricPrompt = BiometricPrompt(fragmentActivity, executor, authCallback)
-              biometricPrompt.authenticate(getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials), cryptoObject)
-            } catch (e: Exception) {
-              promise.reject("Error signing payload: " + e.message, "Error generating signature: " + e.message)
-            }
-          }
-        })
-    } else {
-      promise.reject("Cannot generate keys on android versions below 6.0", "Cannot generate keys on android versions below 6.0")
-    }
-  }
-
-  @ReactMethod
-  fun getPrivateKey(promise: Promise) {
-    if (isCurrentSDKMarshmallowOrLater) {
-      UiThreadUtil.runOnUiThread(object : Runnable {
-        override fun run() {
-          try {
-            val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-            keyStore.load(null)
-            val privateKey: PrivateKey = keyStore.getKey(biometricKeyAlias, null) as PrivateKey
-
-            // Convert the private key to a string format (e.g., Base64)
-            val privateKeyString: String = Base64.encodeToString(privateKey.getEncoded(), Base64.DEFAULT)
-            promise.resolve(privateKeyString)
-          } catch (e: Exception) {
-            promise.reject("Error retrieving private key: " + e.message, "Error retrieving private key: " + e.message)
-          }
-        }
-      })
-    } else {
-      promise.reject("Cannot retrieve keys on android versions below 6.0", "Cannot retrieve keys on android versions below 6.0")
-    }
-  }
+//  @ReactMethod
+//  fun createSignature(params: ReadableMap, promise: Promise) {
+//    if (isCurrentSDKMarshmallowOrLater) {
+//      UiThreadUtil.runOnUiThread(
+//        object : Runnable {
+//          override fun run() {
+//            try {
+//              val promptMessage: String = params.getString("promptMessage")
+//              val payload: String = params.getString("payload")
+//              val cancelButtonText: String = params.getString("cancelButtonText")
+//              val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
+//              val signature: java.security.Signature = java.security.Signature.getInstance("SHA256withRSA")
+//              val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
+//              keyStore.load(null)
+//              val privateKey: PrivateKey = keyStore.getKey(biometricKeyAlias, null) as PrivateKey
+//              signature.initSign(privateKey)
+//              val cryptoObject: BiometricPrompt.CryptoObject = CryptoObject(signature)
+//              val authCallback: AuthenticationCallback = CreateSignatureCallback(promise, payload)
+//              val fragmentActivity: FragmentActivity = getCurrentActivity() as FragmentActivity
+//              val executor: Executor = Executors.newSingleThreadExecutor()
+//              val biometricPrompt = BiometricPrompt(fragmentActivity, executor, authCallback)
+//              biometricPrompt.authenticate(getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials), cryptoObject)
+//            } catch (e: Exception) {
+//              promise.reject("Error signing payload: " + e.message, "Error generating signature: " + e.message)
+//            }
+//          }
+//        })
+//    } else {
+//      promise.reject("Cannot generate keys on android versions below 6.0", "Cannot generate keys on android versions below 6.0")
+//    }
+//  }
 
   private fun getPromptInfo(promptMessage: String, cancelButtonText: String, allowDeviceCredentials: Boolean): PromptInfo {
     val builder: PromptInfo.Builder = Builder().setTitle(promptMessage)
