@@ -16,6 +16,7 @@ import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.fragment.app.FragmentActivity
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import androidx.biometric.BiometricPrompt
 
 
 class RnBiometryModule(reactContext: ReactApplicationContext) :
@@ -66,6 +67,10 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
 
   private fun isCurrentSDK29OrEarlier(): Boolean {
     return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q
+  }
+
+  private fun isCurrentSDKMarshmallowOrLater(): Boolean {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
   }
 
   private fun getAllowedAuthenticators(allowDeviceCredentials: Boolean): Int {
