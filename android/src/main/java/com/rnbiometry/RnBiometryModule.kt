@@ -14,10 +14,6 @@ import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.fragment.app.FragmentActivity
-import com.facebook.react.bridge.Promise
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
-import com.facebook.react.bridge.ReactMethod
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
