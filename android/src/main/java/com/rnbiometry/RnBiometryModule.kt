@@ -39,8 +39,8 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
       UiThreadUtil.runOnUiThread(
         Runnable {
           try {
-            val promptMessage: String = params.getString("promptMessage")
-            val cancelButtonText: String = params.getString("cancelButtonText")
+            val promptMessage: String = params.getString("promptMessage")!!
+            val cancelButtonText: String = params.getString("cancelButtonText")!!
             val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
             val authCallback: BiometricPrompt.AuthenticationCallback = SimplePromptCallback(promise)
             val fragmentActivity = getCurrentActivity() as FragmentActivity
