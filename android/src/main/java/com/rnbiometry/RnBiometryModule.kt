@@ -56,7 +56,7 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
     }
   }
 
-  private fun getPromptInfo(promptMessage: String, cancelButtonText: String, allowDeviceCredentials: Boolean): PromptInfo? {
+  private fun getPromptInfo(promptMessage: String, cancelButtonText: String, allowDeviceCredentials: Boolean): PromptInfo {
     val builder = PromptInfo.Builder().setTitle(promptMessage)
     builder.setAllowedAuthenticators(getAllowedAuthenticators(allowDeviceCredentials))
     if (allowDeviceCredentials == false || isCurrentSDK29OrEarlier()) {

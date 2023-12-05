@@ -1,3 +1,5 @@
+import androidx.annotation.NonNull
+import androidx.biometric.BiometricPrompt
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeMap
@@ -9,7 +11,7 @@ class SimplePromptCallback(promise: Promise) : BiometricPrompt.AuthenticationCal
     this.promise = promise
   }
 
-  fun onAuthenticationError(errorCode: Int, @NonNull errString: CharSequence) {
+  override fun onAuthenticationError(errorCode: Int, @NonNull errString: CharSequence) {
     super.onAuthenticationError(errorCode, errString)
     if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON || errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
       val resultMap: WritableMap = WritableNativeMap()
@@ -21,7 +23,7 @@ class SimplePromptCallback(promise: Promise) : BiometricPrompt.AuthenticationCal
     }
   }
 
-  fun onAuthenticationSucceeded(@NonNull result: BiometricPrompt.AuthenticationResult?) {
+  override fun onAuthenticationSucceeded(@NonNull result: BiometricPrompt.AuthenticationResult) {
     super.onAuthenticationSucceeded(result)
     val resultMap: WritableMap = WritableNativeMap()
     resultMap.putBoolean("success", true)
