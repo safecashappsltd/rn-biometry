@@ -1,7 +1,11 @@
 package com.rnbiometry
 
 import SimplePromptCallback
-
+import android.os.Build
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricPrompt.PromptInfo
+import androidx.fragment.app.FragmentActivity
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -10,15 +14,8 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeMap
-
-
-import android.os.Build
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt.PromptInfo
-import androidx.fragment.app.FragmentActivity
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
-import androidx.biometric.BiometricPrompt
 
 
 class RnBiometryModule(reactContext: ReactApplicationContext) :
@@ -55,6 +52,41 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
         })
     } else {
       promise.reject("Cannot display biometric prompt on android versions below 6.0", "Cannot display biometric prompt on android versions below 6.0")
+    }
+  }
+
+  @ReactMethod
+  fun isSensorAvailable(params: ReadableMap, promise: Promise) {
+    try {
+      if (isCurrentSDKMarshmallowOrLater()) {
+        val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
+        val reactApplicationContext: ReactApplicationContext = getReactApplicationContext()
+        val biometricManager = BiometricManager.from(reactApplicationContext)
+        val canAuthenticate = biometricManager.canAuthenticate(getAllowedAuthenticators(allowDeviceCredentials))
+        if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
+          val resultMap: WritableMap = WritableNativeMap()
+          resultMap.putBoolean("available", true)
+          resultMap.putString("biometryType", "Biometrics")
+          promise.resolve(resultMap)
+        } else {
+          val resultMap: WritableMap = WritableNativeMap()
+          resultMap.putBoolean("available", false)
+          when (canAuthenticate) {
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> resultMap.putString("error", "BIOMETRIC_ERROR_NO_HARDWARE")
+            BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> resultMap.putString("error", "BIOMETRIC_ERROR_HW_UNAVAILABLE")
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> resultMap.putString("error", "BIOMETRIC_ERROR_NONE_ENROLLED")
+            BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> resultMap.putString("error", "BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED")
+          }
+          promise.resolve(resultMap)
+        }
+      } else {
+        val resultMap: WritableMap = WritableNativeMap()
+        resultMap.putBoolean("available", false)
+        resultMap.putString("error", "Unsupported android version")
+        promise.resolve(resultMap)
+      }
+    } catch (e: java.lang.Exception) {
+      promise.reject("Error detecting biometrics availability: " + e.message, "Error detecting biometrics availability: " + e.message)
     }
   }
 
