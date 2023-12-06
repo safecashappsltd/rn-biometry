@@ -2,6 +2,10 @@ import { NativeModules, Platform } from 'react-native';
 
 export type BiometryType = 'TouchID' | 'FaceID' | 'Biometrics';
 
+interface RNBiometricsOptions {
+  allowDeviceCredentials?: boolean;
+}
+
 interface IsSensorAvailableResult {
   available: boolean;
   biometryType?: BiometryType;
@@ -40,25 +44,49 @@ export function multiply(a: number, b: number): Promise<number> {
   return RnBiometry.multiply(a, b);
 }
 
-/**
- * Returns promise that resolves to an object with object.biometryType = Biometrics | TouchID | FaceID
- * @returns {Promise<Object>} Promise that resolves to an object with details about biometrics available
- */
-export function isSensorAvailable(): Promise<IsSensorAvailableResult> {
-  return RnBiometry.isSensorAvailable();
-}
+export default class ReactNativeBiometrics {
+  allowDeviceCredentials = false;
 
-/**
- * Prompts user with biometrics dialog using the passed in prompt message and
- * returns promise that resolves to an object with object.success = true if the user passes,
- * object.success = false if the user cancels, and rejects if anything fails
- * @param {Object} simplePromptOptions
- * @param {string} simplePromptOptions.promptMessage
- * @param {string} simplePromptOptions.fallbackPromptMessage
- * @returns {Promise<Object>}  Promise that resolves an object with details about the biometrics result
- */
-export function simplePrompt(
-  simplePromptOptions: SimplePromptOptions
-): Promise<SimplePromptResult> {
-  return RnBiometry.simplePrompt(simplePromptOptions);
+  /**
+   * @param {Object} rnBiometricsOptions
+   * @param {boolean} rnBiometricsOptions.allowDeviceCredentials
+   */
+  constructor(rnBiometricsOptions?: RNBiometricsOptions) {
+    const allowDeviceCredentials =
+      rnBiometricsOptions?.allowDeviceCredentials ?? false;
+    this.allowDeviceCredentials = allowDeviceCredentials;
+  }
+
+  /**
+   * Returns promise that resolves to an object with object.biometryType = Biometrics | TouchID | FaceID
+   * @returns {Promise<Object>} Promise that resolves to an object with details about biometrics available
+   */
+  isSensorAvailable(): Promise<IsSensorAvailableResult> {
+    return RnBiometry.isSensorAvailable({
+      allowDeviceCredentials: this.allowDeviceCredentials,
+    });
+  }
+
+  /**
+   * Prompts user with biometrics dialog using the passed in prompt message and
+   * returns promise that resolves to an object with object.success = true if the user passes,
+   * object.success = false if the user cancels, and rejects if anything fails
+   * @param {Object} simplePromptOptions
+   * @param {string} simplePromptOptions.promptMessage
+   * @param {string} simplePromptOptions.fallbackPromptMessage
+   * @returns {Promise<Object>}  Promise that resolves an object with details about the biometrics result
+   */
+  simplePrompt(
+    simplePromptOptions: SimplePromptOptions
+  ): Promise<SimplePromptResult> {
+    simplePromptOptions.cancelButtonText =
+      simplePromptOptions.cancelButtonText ?? 'Cancel';
+    simplePromptOptions.fallbackPromptMessage =
+      simplePromptOptions.fallbackPromptMessage ?? 'Use Passcode';
+
+    return RnBiometry.simplePrompt({
+      allowDeviceCredentials: this.allowDeviceCredentials,
+      ...simplePromptOptions,
+    });
+  }
 }
