@@ -45,7 +45,7 @@ export function multiply(a: number, b: number): Promise<number> {
  * @returns {Promise<Object>} Promise that resolves to an object with details about biometrics available
  */
 export function isSensorAvailable(): Promise<IsSensorAvailableResult> {
-  return new RnBiometry.isSensorAvailable();
+  return RnBiometry.isSensorAvailable();
 }
 
 /**
@@ -60,5 +60,5 @@ export function isSensorAvailable(): Promise<IsSensorAvailableResult> {
 export function simplePrompt(
   simplePromptOptions: SimplePromptOptions
 ): Promise<SimplePromptResult> {
-  return new RnBiometry.simplePrompt(simplePromptOptions);
+  return RnBiometry.simplePrompt(simplePromptOptions);
 }
