@@ -32,6 +32,32 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
     promise.resolve(a * b)
   }
 
+  fun getOrCreateSecretKey(keyName: String): SecretKey {
+    val keyStore = KeyStore.getInstance(AndroidKeyStore)
+    keyStore.load(null)
+    keyStore.getKey(keyName,null)?.let { return it as SecretKey }
+
+    val paramsBuilder = KeyGenParameterSpec.Builder(
+        keyName,
+        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+    )
+    paramsBuilder.apply {
+        setBlockModes(ENCYPTED_BLOCK_MODE)
+        setEncryptionPaddings(ENCRYPTION_PADDING)
+        setKeySize(KEY_SIZE)
+        setUserAuthenticationRequired(true)
+    }
+
+    val keyGenParams = paramsBuilder.build()
+    val keyGenerator = KeyGenerator.getInstance(
+        KeyProperties.KEY_ALGORITHM_AES,
+        AndroidKeyStore
+    )
+    keyGenerator.init(keyGenParams)
+    return keyGenerator.generateKey()
+
+}
+
   @ReactMethod
   fun simplePrompt(params: ReadableMap, promise: Promise) {
     if (isCurrentSDKMarshmallowOrLater()) {
