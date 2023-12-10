@@ -48,6 +48,7 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
                     // Get the initialized cipher for encryption
+                    val symmetricKeyAlias = "encryptionKeyAlias"
                     val cipher: Cipher = cryptographyManager.getInitializedCipherForEncryption(symmetricKeyAlias)
 
                     // Set up the biometric prompt callback
@@ -57,7 +58,7 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
                             // Encrypt the token after successful authentication
                             val cipherTextWrapper = cryptographyManager.encryptData(token, cipher)
                             // You can persist the encrypted data or return it via the promise
-                            promise.resolve(cipherTextWrapper.encryptedText) // or persist as needed
+                            promise.resolve(cipherTextWrapper.cipherText) // or persist as needed
                         }
 
                         override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -99,6 +100,7 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
                     // Get the initialized cipher for decryption
+                    val symmetricKeyAlias = "encryptionKeyAlias"
                     val cipher: Cipher = cryptographyManager.getInitializedCipherForDecryption(symmetricKeyAlias, Base64.decode(initializationVector, Base64.DEFAULT))
 
                     // Set up the biometric prompt callback
