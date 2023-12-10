@@ -5,7 +5,6 @@ import org.json.JSONObject
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.google.gson.Gson
 import java.nio.charset.Charset
 import java.security.KeyStore
 import javax.crypto.Cipher
