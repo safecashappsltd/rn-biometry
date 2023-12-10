@@ -1,5 +1,7 @@
 package com.rnbiometry
 
+import android.util.Base64
+import org.json.JSONObject
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -113,8 +115,14 @@ private class CryptographyManagerImpl:CryptographyManager{
     mode: Int,
     prefKey: String
   ) {
-    val json = Gson().toJson(cipherTextWrapper)
-    context.getSharedPreferences(filename,mode).edit().putString(prefKey,json).apply()
+    // val json = Gson().toJson(cipherTextWrapper)
+    // context.getSharedPreferences(filename,mode).edit().putString(prefKey,json).apply()
+     val jsonObject = JSONObject()
+    jsonObject.put("cipherText", Base64.encodeToString(cipherTextWrapper.cipherText, Base64.DEFAULT))
+    jsonObject.put("initializationVector", Base64.encodeToString(cipherTextWrapper.initalizationVector, Base64.DEFAULT))
+
+    val json = jsonObject.toString()
+    context.getSharedPreferences(filename, mode).edit().putString(prefKey, json).apply()
   }
 
   override fun getCipherTextWrapperFromSharedPrefs(
@@ -123,7 +131,17 @@ private class CryptographyManagerImpl:CryptographyManager{
     mode: Int,
     prefKey: String
   ):CipherTextWrapper? {
-    val json = context.getSharedPreferences(filename,mode).getString(prefKey, null)
-    return Gson().fromJson(json,CipherTextWrapper::class.java)
+    // val json = context.getSharedPreferences(filename,mode).getString(prefKey, null)
+    // return Gson().fromJson(json,CipherTextWrapper::class.java)
+
+    val json = context.getSharedPreferences(filename, mode).getString(prefKey, null) ?: return null
+    val jsonObject = JSONObject(json)
+    val cipherTextString = jsonObject.getString("cipherText")
+    val initializationVectorString = jsonObject.getString("initializationVector")
+
+    val cipherText = Base64.decode(cipherTextString, Base64.DEFAULT)
+    val initializationVector = Base64.decode(initializationVectorString, Base64.DEFAULT)
+
+    return CipherTextWrapper(cipherText, initializationVector)
   }
 }
