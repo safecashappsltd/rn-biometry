@@ -16,6 +16,8 @@ import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeMap
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import javax.crypto.Cipher
+import android.util.Base64
 
 
 class RnBiometryModule(reactContext: ReactApplicationContext) :
