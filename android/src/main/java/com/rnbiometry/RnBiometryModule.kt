@@ -48,14 +48,13 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
                     // Assuming CryptographyManager is accessible and initialized
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
-                    // Get the initialized cipher for encryption
-                    val symmetricKeyAlias = "encryptionKeyAlias"
-                    val cipher: Cipher = cryptographyManager.getInitializedCipherForEncryption(symmetricKeyAlias)
-
                     // Set up the biometric prompt callback
                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                             super.onAuthenticationSucceeded(result)
+                                                // Get the initialized cipher for encryption
+                    val symmetricKeyAlias = "encryptionKeyAlias"
+                    val cipher: Cipher = cryptographyManager.getInitializedCipherForEncryption(symmetricKeyAlias)
                             // Encrypt the token after successful authentication
                             val cipherTextWrapper = cryptographyManager.encryptData(token, cipher)
                             // You can persist the encrypted data or return it via the promise
@@ -100,14 +99,13 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                     // Assuming CryptographyManager is accessible and initialized
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
-                    // Get the initialized cipher for decryption
-                    val symmetricKeyAlias = "encryptionKeyAlias"
-                    val cipher: Cipher = cryptographyManager.getInitializedCipherForDecryption(symmetricKeyAlias, Base64.decode(initializationVector, Base64.DEFAULT))
-
                     // Set up the biometric prompt callback
                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                             super.onAuthenticationSucceeded(result)
+                     // Get the initialized cipher for decryption
+                    val symmetricKeyAlias = "encryptionKeyAlias"
+                    val cipher: Cipher = cryptographyManager.getInitializedCipherForDecryption(symmetricKeyAlias, Base64.decode(initializationVector, Base64.DEFAULT))
                             // Decrypt the token after successful authentication
                             val decryptedToken = cryptographyManager.decryptData(Base64.decode(encryptedToken, Base64.DEFAULT), cipher)
                             promise.resolve(decryptedToken)
