@@ -12,14 +12,29 @@ interface IsSensorAvailableResult {
   error?: string;
 }
 
-interface SimplePromptOptions {
+interface EncryptPromptOptions {
   promptMessage: string;
+  token: string;
   fallbackPromptMessage?: string;
   cancelButtonText?: string;
 }
 
-interface SimplePromptResult {
+interface EncryptPromptResult {
   success: boolean;
+  encryptedToken: string;
+  error?: string;
+}
+
+interface DecryptPromptOptions {
+  promptMessage: string;
+  encryptedToken: string;
+  fallbackPromptMessage?: string;
+  cancelButtonText?: string;
+}
+
+interface DecryptPromptResult {
+  success: boolean;
+  token: string;
   error?: string;
 }
 
@@ -67,26 +82,31 @@ export default class ReactNativeBiometrics {
     });
   }
 
-  /**
-   * Prompts user with biometrics dialog using the passed in prompt message and
-   * returns promise that resolves to an object with object.success = true if the user passes,
-   * object.success = false if the user cancels, and rejects if anything fails
-   * @param {Object} simplePromptOptions
-   * @param {string} simplePromptOptions.promptMessage
-   * @param {string} simplePromptOptions.fallbackPromptMessage
-   * @returns {Promise<Object>}  Promise that resolves an object with details about the biometrics result
-   */
-  simplePrompt(
-    simplePromptOptions: SimplePromptOptions
-  ): Promise<SimplePromptResult> {
-    simplePromptOptions.cancelButtonText =
-      simplePromptOptions.cancelButtonText ?? 'Cancel';
-    simplePromptOptions.fallbackPromptMessage =
-      simplePromptOptions.fallbackPromptMessage ?? 'Use Passcode';
+  encryptPrompt(
+    encryptPromptOptions: EncryptPromptOptions
+  ): Promise<EncryptPromptResult> {
+    encryptPromptOptions.cancelButtonText =
+      encryptPromptOptions.cancelButtonText ?? 'Cancel';
+    encryptPromptOptions.fallbackPromptMessage =
+      encryptPromptOptions.fallbackPromptMessage ?? 'Use Passcode';
 
-    return RnBiometry.simplePrompt({
+    return RnBiometry.showBiometricPromptForEncryption({
       allowDeviceCredentials: this.allowDeviceCredentials,
-      ...simplePromptOptions,
+      ...encryptPromptOptions,
+    });
+  }
+
+  decryptPrompt(
+    decryptPromptOptions: DecryptPromptOptions
+  ): Promise<DecryptPromptResult> {
+    decryptPromptOptions.cancelButtonText =
+      decryptPromptOptions.cancelButtonText ?? 'Cancel';
+    decryptPromptOptions.fallbackPromptMessage =
+      decryptPromptOptions.fallbackPromptMessage ?? 'Use Passcode';
+
+    return RnBiometry.showBiometricPromptForEncryption({
+      allowDeviceCredentials: this.allowDeviceCredentials,
+      ...decryptPromptOptions,
     });
   }
 }
