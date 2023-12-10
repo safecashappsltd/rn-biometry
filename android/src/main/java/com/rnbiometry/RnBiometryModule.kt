@@ -34,6 +34,7 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
     promise.resolve(a * b)
   }
 
+@ReactMethod
   fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
     if (isCurrentSDKMarshmallowOrLater()) {
         UiThreadUtil.runOnUiThread(

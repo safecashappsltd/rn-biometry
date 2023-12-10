@@ -104,7 +104,7 @@ export default class ReactNativeBiometrics {
     decryptPromptOptions.fallbackPromptMessage =
       decryptPromptOptions.fallbackPromptMessage ?? 'Use Passcode';
 
-    return RnBiometry.showBiometricPromptForEncryption({
+    return RnBiometry.showBiometricPromptForDecryption({
       allowDeviceCredentials: this.allowDeviceCredentials,
       ...decryptPromptOptions,
     });
