@@ -34,6 +34,66 @@ class RnBiometryModule(reactContext: ReactApplicationContext) :
     promise.resolve(a * b)
   }
 
+  @ReactMethod
+fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
+    if (isCurrentSDKMarshmallowOrLater()) {
+        UiThreadUtil.runOnUiThread(
+            Runnable {
+                try {
+                    val promptMessage: String = params.getString("promptMessage")!!
+                    val token: String = params.getString("token")!!  // Assuming 'token' is the data to be encrypted
+                    val cancelButtonText: String = params.getString("cancelButtonText")!!
+                    val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
+
+                    // Assuming CryptographyManager is accessible and initialized
+                    val cryptographyManager: CryptographyManager = CryptographyManager()
+
+                    // Initialize the cipher for encryption
+                    val symmetricKeyAlias = "encryptionKeyAlias"
+                    val cipher: Cipher = cryptographyManager.getInitializedCipherForEncryption(symmetricKeyAlias)
+
+                    val fragmentActivity = getCurrentActivity() as FragmentActivity
+                    val executor: Executor = Executors.newSingleThreadExecutor()
+
+                    // Set up the biometric prompt callback
+                    val authCallback = object : BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                            super.onAuthenticationSucceeded(result)
+                            try {
+                                // Encrypt the token after successful authentication
+                                val cipherTextWrapper = cryptographyManager.encryptData(token, result.cryptoObject?.cipher!!)
+                                // You can persist the encrypted data or return it via the promise
+                                promise.resolve(cipherTextWrapper.cipherText) // or persist as needed
+                            } catch (e: Exception) {
+                                promise.reject("Encryption error", "Error occurred during encryption: ${e.message}")
+                            }
+                        }
+
+                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                            super.onAuthenticationError(errorCode, errString)
+                            promise.reject("Biometric Authentication error", errString.toString())
+                        }
+
+                        // Handle other authentication cases (failure, cancellation) as needed
+                    }
+
+                    val biometricPrompt = BiometricPrompt(fragmentActivity, executor, authCallback)
+                    
+                    // Create a CryptoObject associated with the cipher
+                    val cryptoObject = BiometricPrompt.CryptoObject(cipher)
+
+                    // Start the biometric authentication
+                    biometricPrompt.authenticate(getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials), cryptoObject)
+                } catch (e: Exception) {
+                    promise.reject("Error displaying local biometric prompt: " + e.message, "Error displaying local biometric prompt: " + e.message)
+                }
+            })
+    } else {
+        promise.reject("Cannot display biometric prompt on android versions below 6.0", "Cannot display biometric prompt on android versions below 6.0")
+    }
+}
+
+
 @ReactMethod
   fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
     if (isCurrentSDKMarshmallowOrLater()) {
