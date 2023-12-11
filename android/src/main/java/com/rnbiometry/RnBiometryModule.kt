@@ -58,7 +58,10 @@ fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
                     // Set up the biometric prompt callback
                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                          val TAG = "EnableBiometricLogin onAuthenticationSucceeded"
+                          Log.d(TAG, result)
                             super.onAuthenticationSucceeded(result)
+                            Log.d(TAG, result)
                             try {
                                 // Encrypt the token after successful authentication
                                 val cipherTextWrapper = cryptographyManager.encryptData(token, result.cryptoObject?.cipher!!)

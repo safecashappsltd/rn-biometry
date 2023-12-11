@@ -98,11 +98,19 @@ private class CryptographyManagerImpl:CryptographyManager{
   }
 
   override fun encryptData(text: String, cipher: Cipher): CipherTextWrapper {
+        val TAG = "EnableBiometricLogin encryptData"
+
+    Log.d(TAG, "text: $text")
+    Log.d(TAG, "cipher: $cipher")
     val cipherText = cipher.doFinal(text.toByteArray(Charset.forName("UTF-8")))
     return CipherTextWrapper(cipherText,cipher.iv)
   }
 
   override fun decryptData(cipherText: ByteArray, cipher: Cipher): String {
+        val TAG = "EnableBiometricLogin decryptData"
+
+    Log.d(TAG, "cipherText: $cipherText")
+    Log.d(TAG, "cipher: $cipher")
     val text = cipher.doFinal(cipherText)
     return String(text, Charset.forName("UTF-8"))
   }
