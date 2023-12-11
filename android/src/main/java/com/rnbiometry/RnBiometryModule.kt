@@ -23,7 +23,7 @@ import android.util.Log
 
 class RnBiometryModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
-  private val TAG = "EnableBiometricLoginModule"
+  private val TAG = "BioModule"
 
   override fun getName(): String {
     return NAME
