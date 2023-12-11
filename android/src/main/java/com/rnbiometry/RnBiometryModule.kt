@@ -196,7 +196,8 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                     // Start the biometric authentication
                     biometricPrompt.authenticate(getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials), cryptoObject)
                 } catch (e: Exception) {
-                    promise.reject("Error displaying local biometric prompt: " + e.message, "Error displaying local biometric prompt: " + e.message)
+                    Log.e("BiometricPrompt", "Error in biometric prompt: ", e.toString())
+                    promise.reject("Error displaying local biometric prompt: " + e.toString(), "Error displaying local biometric prompt: " + e.toString())
                 }
             })
     } else {
