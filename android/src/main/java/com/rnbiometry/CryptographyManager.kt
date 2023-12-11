@@ -11,6 +11,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import android.util.Log
 
 interface CryptographyManager {
 
@@ -48,6 +49,7 @@ private class CryptographyManagerImpl:CryptographyManager{
   private val ENCYPTED_BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
   private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
   private val ENCRYPTION_ALGORITHM =KeyProperties.KEY_ALGORITHM_AES
+  private val TAG = "EnableBiometricLoginManager"
 
   override fun getInitializedCipherForEncryption(keyName: String): Cipher {
     val cipher = getCipher()
@@ -98,8 +100,6 @@ private class CryptographyManagerImpl:CryptographyManager{
   }
 
   override fun encryptData(text: String, cipher: Cipher): CipherTextWrapper {
-        val TAG = "EnableBiometricLogin encryptData"
-
     Log.d(TAG, "text: $text")
     Log.d(TAG, "cipher: $cipher")
     val cipherText = cipher.doFinal(text.toByteArray(Charset.forName("UTF-8")))
@@ -107,8 +107,6 @@ private class CryptographyManagerImpl:CryptographyManager{
   }
 
   override fun decryptData(cipherText: ByteArray, cipher: Cipher): String {
-        val TAG = "EnableBiometricLogin decryptData"
-
     Log.d(TAG, "cipherText: $cipherText")
     Log.d(TAG, "cipher: $cipher")
     val text = cipher.doFinal(cipherText)

@@ -18,10 +18,12 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import javax.crypto.Cipher
 import android.util.Base64
+import android.util.Log
 
 
 class RnBiometryModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
+  private val TAG = "EnableBiometricLoginModule"
 
   override fun getName(): String {
     return NAME
@@ -58,7 +60,6 @@ fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
                     // Set up the biometric prompt callback
                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                          val TAG = "EnableBiometricLogin onAuthenticationSucceeded"
                           Log.d(TAG, result)
                             super.onAuthenticationSucceeded(result)
                             Log.d(TAG, result)
