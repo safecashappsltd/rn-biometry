@@ -19,23 +19,11 @@ interface EncryptPromptOptions {
   cancelButtonText?: string;
 }
 
-interface EncryptPromptResult {
-  success: boolean;
-  encryptedToken: string;
-  error?: string;
-}
-
 interface DecryptPromptOptions {
   promptMessage: string;
   encryptedToken: string;
   fallbackPromptMessage?: string;
   cancelButtonText?: string;
-}
-
-interface DecryptPromptResult {
-  success: boolean;
-  token: string;
-  error?: string;
 }
 
 const LINKING_ERROR =
@@ -82,9 +70,7 @@ export default class ReactNativeBiometrics {
     });
   }
 
-  encryptPrompt(
-    encryptPromptOptions: EncryptPromptOptions
-  ): Promise<EncryptPromptResult> {
+  encryptPrompt(encryptPromptOptions: EncryptPromptOptions): Promise<string> {
     encryptPromptOptions.cancelButtonText =
       encryptPromptOptions.cancelButtonText ?? 'Cancel';
     encryptPromptOptions.fallbackPromptMessage =
@@ -96,9 +82,7 @@ export default class ReactNativeBiometrics {
     });
   }
 
-  decryptPrompt(
-    decryptPromptOptions: DecryptPromptOptions
-  ): Promise<DecryptPromptResult> {
+  decryptPrompt(decryptPromptOptions: DecryptPromptOptions): Promise<string> {
     decryptPromptOptions.cancelButtonText =
       decryptPromptOptions.cancelButtonText ?? 'Cancel';
     decryptPromptOptions.fallbackPromptMessage =

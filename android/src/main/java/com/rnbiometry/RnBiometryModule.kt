@@ -65,8 +65,11 @@ fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
                             try {
                                 // Encrypt the token after successful authentication
                                 val cipherTextWrapper = cryptographyManager.encryptData(token, result.cryptoObject?.cipher!!)
-                                // You can persist the encrypted data or return it via the promise
-                                promise.resolve(cipherTextWrapper.cipherText) // or persist as needed
+                                val encryptedDataString = Base64.encodeToString(cipherTextWrapper.cipherText, Base64.DEFAULT)
+                                val ivString = Base64.encodeToString(cipherTextWrapper.initializationVector, Base64.DEFAULT)
+                                val combinedString = "$ivString:$encryptedDataString"
+
+                                promise.resolve(combinedString)
                             } catch (e: Exception) {
                                 promise.reject("Encryption error", "Error occurred during encryption: ${e.message}")
                             }
@@ -96,56 +99,6 @@ fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
     }
 }
 
-// @ReactMethod
-// fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
-//     if (isCurrentSDKMarshmallowOrLater()) {
-//         UiThreadUtil.runOnUiThread(
-//             Runnable {
-//                 try {
-//                     val promptMessage: String = params.getString("promptMessage")!!
-//                     val encryptedToken: String = params.getString("encryptedToken")!!  // The encrypted data
-//                     val initializationVector: String = params.getString("initializationVector")!!  // The IV needed for decryption
-//                     val cancelButtonText: String = params.getString("cancelButtonText")!!
-//                     val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
-
-//                     // Assuming CryptographyManager is accessible and initialized
-//                     val cryptographyManager: CryptographyManager = CryptographyManager()
-
-//                     // Set up the biometric prompt callback
-//                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
-//                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-//                             super.onAuthenticationSucceeded(result)
-//                      // Get the initialized cipher for decryption
-//                     val symmetricKeyAlias = "encryptionKeyAlias"
-//                     val cipher: Cipher = cryptographyManager.getInitializedCipherForDecryption(symmetricKeyAlias, Base64.decode(initializationVector, Base64.DEFAULT))
-//                             // Decrypt the token after successful authentication
-//                             val decryptedToken = cryptographyManager.decryptData(Base64.decode(encryptedToken, Base64.DEFAULT), cipher)
-//                             promise.resolve(decryptedToken)
-//                         }
-
-//                         override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-//                             super.onAuthenticationError(errorCode, errString)
-//                             promise.reject("Biometric Authentication error", errString.toString())
-//                         }
-
-//                         // Handle other authentication cases (failure, cancellation) as needed
-//                     }
-
-//                     val fragmentActivity = getCurrentActivity() as FragmentActivity
-//                     val executor: Executor = Executors.newSingleThreadExecutor()
-//                     val biometricPrompt = BiometricPrompt(fragmentActivity, executor, authCallback)
-
-//                     // Start the biometric authentication
-//                     biometricPrompt.authenticate(getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials))
-//                 } catch (e: Exception) {
-//                     promise.reject("Error displaying local biometric prompt: " + e.message, "Error displaying local biometric prompt: " + e.message)
-//                 }
-//             })
-//     } else {
-//         promise.reject("Cannot display biometric prompt on android versions below 6.0", "Cannot display biometric prompt on android versions below 6.0")
-//     }
-// }
-
 @ReactMethod
 fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
     if (isCurrentSDKMarshmallowOrLater()) {
@@ -153,17 +106,25 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
             Runnable {
                 try {
                     val promptMessage: String = params.getString("promptMessage")!!
-                    val encryptedToken: String = params.getString("encryptedToken")!!  // The encrypted data, Base64 encoded
-                    val initializationVector: String = params.getString("initializationVector")!!  // The IV, Base64 encoded
+                    val combinedString: String = params.getString("encryptedToken")!!  // The combined 'iv:encryptedData' string
                     val cancelButtonText: String = params.getString("cancelButtonText")!!
                     val allowDeviceCredentials: Boolean = params.getBoolean("allowDeviceCredentials")
+
+                    // Split the combined string into IV and encrypted data
+                    val parts = combinedString.split(":")
+                    if (parts.size != 2) {
+                        promise.reject("Decryption error", "Invalid combined string format")
+                        return
+                    }
+                    val iv = Base64.decode(parts[0], Base64.DEFAULT)
+                    val encryptedData = Base64.decode(parts[1], Base64.DEFAULT)
 
                     // Assuming CryptographyManager is accessible and initialized
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
                     // Initialize the cipher for decryption
                     val symmetricKeyAlias = "encryptionKeyAlias"
-                    val cipher: Cipher = cryptographyManager.getInitializedCipherForDecryption(symmetricKeyAlias, Base64.decode(initializationVector, Base64.DEFAULT))
+                    val cipher: Cipher = cryptographyManager.getInitializedCipherForDecryption(symmetricKeyAlias, iv)
                     val cryptoObject = BiometricPrompt.CryptoObject(cipher)
 
                     val fragmentActivity = getCurrentActivity() as FragmentActivity
@@ -173,10 +134,9 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                             super.onAuthenticationSucceeded(result)
-                            Log.d(TAG, result.toString())
                             try {
                                 // Decrypt the token after successful authentication
-                                val decryptedToken = cryptographyManager.decryptData(Base64.decode(encryptedToken, Base64.DEFAULT), result.cryptoObject?.cipher!!)
+                                val decryptedToken = cryptographyManager.decryptData(encryptedData, result.cryptoObject?.cipher!!)
                                 promise.resolve(decryptedToken)
                             } catch (e: Exception) {
                                 promise.reject("Decryption error", "Error occurred during decryption: ${e.message}")
@@ -196,14 +156,15 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                     // Start the biometric authentication
                     biometricPrompt.authenticate(getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials), cryptoObject)
                 } catch (e: Exception) {
-                    Log.e("BiometricPrompt", "Error in biometric prompt: ", e.toString())
-                    promise.reject("Error displaying local biometric prompt: " + e.toString(), "Error displaying local biometric prompt: " + e.toString())
+                    Log.e("BiometricPrompt", "Error in biometric prompt: ", e)
+                    promise.reject("Error displaying local biometric prompt: " + e.message, "Error displaying local biometric prompt: " + e.message)
                 }
             })
     } else {
         promise.reject("Cannot display biometric prompt on android versions below 6.0", "Cannot display biometric prompt on android versions below 6.0")
     }
 }
+
 
   @ReactMethod
   fun isSensorAvailable(params: ReadableMap, promise: Promise) {
