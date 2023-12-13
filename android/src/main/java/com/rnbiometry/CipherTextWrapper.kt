@@ -9,7 +9,7 @@ object Constants {
 
 data class CipherTextWrapper(
   val cipherText:ByteArray,
-  val initalizationVector:ByteArray
+  val initializationVector:ByteArray
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -18,14 +18,14 @@ data class CipherTextWrapper(
     other as CipherTextWrapper
 
     if (!cipherText.contentEquals(other.cipherText)) return false
-    if (!initalizationVector.contentEquals(other.initalizationVector)) return false
+    if (!initializationVector.contentEquals(other.initializationVector)) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = cipherText.contentHashCode()
-    result = 31 * result + initalizationVector.contentHashCode()
+    result = 31 * result + initializationVector.contentHashCode()
     return result
   }
 }

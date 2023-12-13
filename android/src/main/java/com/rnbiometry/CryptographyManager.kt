@@ -124,7 +124,7 @@ private class CryptographyManagerImpl:CryptographyManager{
     // context.getSharedPreferences(filename,mode).edit().putString(prefKey,json).apply()
      val jsonObject = JSONObject()
     jsonObject.put("cipherText", Base64.encodeToString(cipherTextWrapper.cipherText, Base64.DEFAULT))
-    jsonObject.put("initializationVector", Base64.encodeToString(cipherTextWrapper.initalizationVector, Base64.DEFAULT))
+    jsonObject.put("initializationVector", Base64.encodeToString(cipherTextWrapper.initializationVector, Base64.DEFAULT))
 
     val json = jsonObject.toString()
     context.getSharedPreferences(filename, mode).edit().putString(prefKey, json).apply()
