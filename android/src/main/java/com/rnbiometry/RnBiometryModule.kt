@@ -61,7 +61,6 @@ fun showBiometricPromptForEncryption(params: ReadableMap, promise: Promise) {
                     val authCallback = object : BiometricPrompt.AuthenticationCallback() {
                         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                             super.onAuthenticationSucceeded(result)
-                            Log.d(TAG, result.toString())
                             try {
                                 // Encrypt the token after successful authentication
                                 val cipherTextWrapper = cryptographyManager.encryptData(token, result.cryptoObject?.cipher!!)
@@ -116,9 +115,11 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                         promise.reject("Decryption error", "Invalid combined string format")
                         return
                     }
+                    Log.d(TAG, combinedString)
                     val iv = Base64.decode(parts[0], Base64.DEFAULT)
                     val encryptedData = Base64.decode(parts[1], Base64.DEFAULT)
-
+                    Log.d(TAG, iv)
+                    Log.d(TAG, encryptedData)
                     // Assuming CryptographyManager is accessible and initialized
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
