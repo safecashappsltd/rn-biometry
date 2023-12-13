@@ -113,13 +113,15 @@ fun showBiometricPromptForDecryption(params: ReadableMap, promise: Promise) {
                     val parts = combinedString.split(":")
                     if (parts.size != 2) {
                         promise.reject("Decryption error", "Invalid combined string format")
-                        return
+                        return@Runnable
                     }
                     Log.d(TAG, combinedString)
+                    Log.d(TAG, parts[0])
+                    Log.d(TAG, parts[1])
                     val iv = Base64.decode(parts[0], Base64.DEFAULT)
                     val encryptedData = Base64.decode(parts[1], Base64.DEFAULT)
-                    Log.d(TAG, iv)
-                    Log.d(TAG, encryptedData)
+                    Log.d(TAG, iv.toString())
+                    Log.d(TAG, encryptedData.toString())
                     // Assuming CryptographyManager is accessible and initialized
                     val cryptographyManager: CryptographyManager = CryptographyManager()
 
