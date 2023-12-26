@@ -1,4 +1,5 @@
 import LocalAuthentication
+import Security
 
 @objc(RnBiometry)
 class RnBiometry: NSObject {
@@ -27,16 +28,86 @@ class RnBiometry: NSObject {
         }
     }
 
-    @objc(showBiometricPromptForDecryption:resolver:rejecter:)
+ @objc(showBiometricPromptForDecryption:resolver:rejecter:)
     func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        // Placeholder implementation, return true for now
-        resolve(true)
+        let context = LAContext()
+        context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
+
+        // Check if biometric authentication is available
+        var error: NSError?
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            reject("Biometric_Error", "Biometric authentication is not available", error)
+            return
+        }
+
+        let promptMessage = params["promptMessage"] as? String ?? "Authenticate to decrypt the data"
+        let combinedString = params["encryptedToken"] as? String ?? ""
+
+        // Split the combined string into IV and encrypted data
+        let parts = combinedString.split(separator: ":")
+        guard parts.count == 2, let ivData = Data(base64Encoded: String(parts[0])), let encryptedData = Data(base64Encoded: String(parts[1])) else {
+            reject("Decryption_Error", "Invalid combined string format", nil)
+            return
+        }
+
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: promptMessage) { success, evaluateError in
+            DispatchQueue.main.async {
+                if success {
+                    // Implement the decryption logic here
+                    if let decryptedToken = self.decryptData(encryptedData: encryptedData, iv: ivData) {
+                        resolve(decryptedToken)
+                    } else {
+                        reject("Decryption_Error", "Decryption failed", nil)
+                    }
+                } else {
+                    // Handle the error
+                    if let error = evaluateError as NSError? {
+                        reject("Authentication_Error", "Authentication failed", error)
+                    }
+                }
+            }
+        }
     }
 
-    @objc(showBiometricPromptForEncryption:resolver:rejecter:)
+   @objc(showBiometricPromptForEncryption:resolver:rejecter:)
     func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        // Placeholder implementation, return true for now
-        resolve(true)
+        let context = LAContext()
+        context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
+
+        // Check if biometric authentication is available
+        var error: NSError?
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            reject("Biometric_Error", "Biometric authentication is not available", error)
+            return
+        }
+
+        let promptMessage = params["promptMessage"] as? String ?? "Authenticate to encrypt the data"
+        let payload = params["payload"] as? String ?? ""
+
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: promptMessage) { success, evaluateError in
+            DispatchQueue.main.async {
+                if success {
+                    // Placeholder for encryption logic
+                    // Encrypt the payload here as needed
+
+                    // For now, just return true as you requested
+                    resolve(true)
+                } else {
+                    // Handle the error
+                    if let error = evaluateError as NSError? {
+                        reject("Authentication_Error", "Authentication failed", error)
+                    }
+                }
+            }
+        }
+    }
+
+    private func decryptData(encryptedData: Data, iv: Data) -> String? {
+        // Implement decryption logic here
+        // Example: Decrypt using a symmetric key
+
+        // For demonstration, return a placeholder string
+        return "Decrypted data"
     }
 
     private func getBiometryType(context: LAContext) -> String {
