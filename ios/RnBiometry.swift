@@ -1,6 +1,13 @@
 import LocalAuthentication
 import Security
-import CryptoKit
+import CommonCrypto
+
+extension Data {
+    var bytes: UnsafeRawPointer {
+        return (self as NSData).bytes
+    }
+}
+
 
 @objc(RnBiometry)
 class RnBiometry: NSObject {
@@ -33,6 +40,7 @@ class RnBiometry: NSObject {
 func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     let context = LAContext()
     context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
+    let encryptedTokenData = params["encryptedToken"] as? Data
 
     // Check if biometric authentication is available
     var error: NSError?
@@ -57,7 +65,7 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
 
                 var item: CFTypeRef?
                 let status = SecItemCopyMatching(keyQuery as CFDictionary, &item)
-                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = decryptToken(encryptedToken, with: keyData) {
+                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = decryptToken(encryptedTokenData, with: keyData) {
                     resolve(decryptedToken)
                 } else {
                     reject("Keychain_Error", "Could not retrieve symmetric key", NSError(domain: NSOSStatusErrorDomain, code: Int(status)))
@@ -98,8 +106,8 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
     context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: promptMessage) { success, evaluateError in
         DispatchQueue.main.async {
             if success {
-                let symmetricKey = generateSymmetricKey() // Implement this function
-                guard let encryptedToken = encryptToken(token, with: symmetricKey) else {
+                let symmetricKey = self.generateSymmetricKey() 
+                guard let encryptedToken = self.encryptToken(token, with: symmetricKey) else {
                     reject("Encryption_Error", "Failed to encrypt the token", nil)
                     return
                 }
@@ -131,26 +139,24 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
 }
 
 private func encryptToken(_ token: String, with key: Data) -> Data? {
-    let key = SymmetricKey(data: key)
-    let data = Data(token.utf8)
-    do {
-        let sealedBox = try AES.GCM.seal(data, using: key)
-        return sealedBox.combined
-    } catch {
-        return nil
-    }
+    guard let data = token.data(using: .utf8), key.count == kCCKeySizeAES256 else { return nil }
+    var numBytesEncrypted = 0
+    var encryptedBytes = [UInt8](repeating: 0, count: data.count + kCCBlockSizeAES128)
+    
+    let status = CCCrypt(CCOperation(kCCEncrypt), CCAlgorithm(kCCAlgorithmAES), CCOptions(kCCOptionPKCS7Padding), key.bytes, key.count, nil, data.bytes, data.count, &encryptedBytes, encryptedBytes.count, &numBytesEncrypted)
+
+    return status == kCCSuccess ? Data(bytes: encryptedBytes, count: numBytesEncrypted) : nil
 }
 
 
 private func decryptToken(_ encryptedToken: Data, with key: Data) -> String? {
-    let key = SymmetricKey(data: key)
-    do {
-        let sealedBox = try AES.GCM.SealedBox(combined: encryptedToken)
-        let decryptedData = try AES.GCM.open(sealedBox, using: key)
-        return String(data: decryptedData, encoding: .utf8)
-    } catch {
-        return nil
-    }
+    guard key.count == kCCKeySizeAES256 else { return nil }
+    var numBytesDecrypted = 0
+    var decryptedBytes = [UInt8](repeating: 0, count: encryptedToken.count + kCCBlockSizeAES128)
+    
+    let status = CCCrypt(CCOperation(kCCDecrypt), CCAlgorithm(kCCAlgorithmAES), CCOptions(kCCOptionPKCS7Padding), key.bytes, key.count, nil, encryptedToken.bytes, encryptedToken.count, &decryptedBytes, decryptedBytes.count, &numBytesDecrypted)
+
+    return status == kCCSuccess ? String(bytes: decryptedBytes, count: numBytesDecrypted, encoding: .utf8) : nil
 }
 
     private func getBiometryType(context: LAContext) -> String {
