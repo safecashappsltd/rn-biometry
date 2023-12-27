@@ -99,9 +99,12 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
     let promptMessage = params["promptMessage"] as? String ?? "Authenticate to encrypt and store the data"
     let token = params["token"] as? String ?? ""
 
+    print("Token: \(token)")
+
     // Access Control for the keychain item
     var accessControlError: Unmanaged<CFError>?
     guard let accessControl = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, .userPresence, &accessControlError) else {
+        print("accessControl failed")
         reject("AccessControl_Error", "Could not create access control", accessControlError?.takeRetainedValue())
         return
     }
@@ -111,9 +114,12 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
             if success {
                 let symmetricKey = self.generateSymmetricKey() 
                 guard let encryptedToken = self.encryptToken(token: token, with: symmetricKey) else {
+                    print("Encryption failed")
                     reject("Encryption_Error", "Failed to encrypt the token", nil)
                     return
                 }
+
+                print("Encrypted Token: \(encryptedToken)")
 
                 // Store the symmetric key in the keychain
                 let keyQuery: [String: Any] = [
