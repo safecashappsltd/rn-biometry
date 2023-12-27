@@ -1,6 +1,7 @@
 import LocalAuthentication
 import Security
 import CommonCrypto
+import CryptoKit
 
 extension Data {
     var bytes: UnsafeRawPointer {
@@ -65,7 +66,7 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
 
                 var item: CFTypeRef?
                 let status = SecItemCopyMatching(keyQuery as CFDictionary, &item)
-                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = decryptToken(encryptedTokenData, with: keyData) {
+                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = self.decryptToken(encryptedTokenData, with: keyData) {
                     resolve(decryptedToken)
                 } else {
                     reject("Keychain_Error", "Could not retrieve symmetric key", NSError(domain: NSOSStatusErrorDomain, code: Int(status)))
