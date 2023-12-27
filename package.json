@@ -1,6 +1,6 @@
 {
   "name": "rn-biometry",
-  "version": "0.1.42",
+  "version": "0.1.43",
   "description": "biometry auth with symmetric key encription",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
