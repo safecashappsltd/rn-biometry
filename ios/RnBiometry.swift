@@ -1,7 +1,6 @@
 import LocalAuthentication
 import Security
 import CommonCrypto
-import CryptoKit
 
 extension Data {
     var bytes: UnsafeRawPointer {
@@ -69,7 +68,7 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
 
                 var item: CFTypeRef?
                 let status = SecItemCopyMatching(keyQuery as CFDictionary, &item)
-                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = self.decryptToken(encryptedTokenData, with: keyData) {
+                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = self.decryptToken(encryptedToken: encryptedTokenData, with: keyData) {
                     resolve(decryptedToken)
                 } else {
                     reject("Keychain_Error", "Could not retrieve symmetric key", NSError(domain: NSOSStatusErrorDomain, code: Int(status)))
@@ -111,7 +110,7 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
         DispatchQueue.main.async {
             if success {
                 let symmetricKey = self.generateSymmetricKey() 
-                guard let encryptedToken = self.encryptToken(token, with: symmetricKey) else {
+                guard let encryptedToken = self.encryptToken(token: token, with: symmetricKey) else {
                     reject("Encryption_Error", "Failed to encrypt the token", nil)
                     return
                 }
@@ -137,9 +136,21 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
     }
 }
 
-    private func generateSymmetricKey() -> Data {
-    let key = SymmetricKey(size: .bits256) // Generates a 256-bit key
-    return key.withUnsafeBytes { Data($0) }
+//     private func generateSymmetricKey() -> Data {
+//     let key = SymmetricKey(size: .bits256) // Generates a 256-bit key
+//     return key.withUnsafeBytes { Data($0) }
+// }
+
+private func generateSymmetricKey() -> Data {
+    var key = Data(count: kCCKeySizeAES256)
+    let result = key.withUnsafeMutableBytes { 
+        SecRandomCopyBytes(kSecRandomDefault, kCCKeySizeAES256, $0.baseAddress!) 
+    }
+    if result == errSecSuccess {
+        return key
+    } else {
+        fatalError("Unable to generate random bytes for key")
+    }
 }
 
 private func encryptToken(token: String, with key: Data) -> Data? {
