@@ -41,7 +41,10 @@ class RnBiometry: NSObject {
 func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     let context = LAContext()
     context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
-    let encryptedTokenData = params["encryptedToken"] as? Data
+    guard let encryptedTokenData = params["encryptedToken"] as? Data else {
+    reject("Parameter_Error", "Encrypted token not found in parameters", nil)
+    return
+}
 
     // Check if biometric authentication is available
     var error: NSError?
@@ -139,7 +142,7 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
     return key.withUnsafeBytes { Data($0) }
 }
 
-private func encryptToken(_ token: String, with key: Data) -> Data? {
+private func encryptToken(token: String, with key: Data) -> Data? {
     guard let data = token.data(using: .utf8), key.count == kCCKeySizeAES256 else { return nil }
     var numBytesEncrypted = 0
     var encryptedBytes = [UInt8](repeating: 0, count: data.count + kCCBlockSizeAES128)
@@ -150,14 +153,14 @@ private func encryptToken(_ token: String, with key: Data) -> Data? {
 }
 
 
-private func decryptToken(_ encryptedToken: Data, with key: Data) -> String? {
+private func decryptToken(encryptedToken: Data, with key: Data) -> String? {
     guard key.count == kCCKeySizeAES256 else { return nil }
     var numBytesDecrypted = 0
     var decryptedBytes = [UInt8](repeating: 0, count: encryptedToken.count + kCCBlockSizeAES128)
     
     let status = CCCrypt(CCOperation(kCCDecrypt), CCAlgorithm(kCCAlgorithmAES), CCOptions(kCCOptionPKCS7Padding), key.bytes, key.count, nil, encryptedToken.bytes, encryptedToken.count, &decryptedBytes, decryptedBytes.count, &numBytesDecrypted)
 
-    return status == kCCSuccess ? String(bytes: decryptedBytes, count: numBytesDecrypted, encoding: .utf8) : nil
+return status == kCCSuccess ? String(data: Data(decryptedBytes[0..<numBytesDecrypted]), encoding: .utf8) : nil
 }
 
     private func getBiometryType(context: LAContext) -> String {
