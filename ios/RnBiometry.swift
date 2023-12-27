@@ -113,13 +113,16 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
         DispatchQueue.main.async {
             if success {
                 let symmetricKey = self.generateSymmetricKey() 
+                print("Symmetric Key Generated")
+
                 guard let encryptedToken = self.encryptToken(token: token, with: symmetricKey) else {
                     print("Encryption failed")
                     reject("Encryption_Error", "Failed to encrypt the token", nil)
                     return
                 }
 
-                print("Encrypted Token: \(encryptedToken)")
+                let encryptedTokenBase64 = encryptedToken.base64EncodedString()
+                print("Encrypted Token: \(encryptedTokenBase64)")
 
                 // Store the symmetric key in the keychain
                 let keyQuery: [String: Any] = [
@@ -130,8 +133,15 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
                 ]
                 SecItemAdd(keyQuery as CFDictionary, nil)
 
-                // Return the encrypted token to JavaScript
-                resolve(encryptedToken)
+                let keychainResult = SecItemAdd(keyQuery as CFDictionary, nil)
+               print("Keychain add result: \(keychainResult)")
+
+               if keychainResult == errSecSuccess {
+                    // Return the Base64 encoded encrypted token to JavaScript
+                   resolve(encryptedTokenBase64)
+              } else {
+             reject("Keychain_Error", "Failed to store symmetric key in keychain", nil)
+                }
             } else {
                 // Handle the error
                 if let error = evaluateError as NSError? {
