@@ -130,8 +130,6 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
     return key.withUnsafeBytes { Data($0) }
 }
 
-import CryptoKit
-
 private func encryptToken(_ token: String, with key: Data) -> Data? {
     let key = SymmetricKey(data: key)
     let data = Data(token.utf8)
