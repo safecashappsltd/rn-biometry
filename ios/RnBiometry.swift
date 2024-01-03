@@ -40,14 +40,19 @@ class RnBiometry: NSObject {
 func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     let context = LAContext()
     context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
+
     guard let encryptedTokenData = params["encryptedToken"] as? Data else {
-    reject("Parameter_Error", "Encrypted token not found in parameters", nil)
-    return
-}
+        print("Encrypted token parameter missing")
+        reject("Parameter_Error", "Encrypted token not found in parameters", nil)
+        return
+    }
+
+    print("Received encrypted token")
 
     // Check if biometric authentication is available
     var error: NSError?
     guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+        print("Biometric authentication not available, Error: \(String(describing: error))")
         reject("Biometric_Error", "Biometric authentication is not available", error)
         return
     }
@@ -57,6 +62,8 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
     context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: promptMessage) { success, evaluateError in
         DispatchQueue.main.async {
             if success {
+                print("Biometric authentication succeeded")
+
                 // Retrieve the symmetric key from the keychain
                 let keyQuery: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
@@ -68,13 +75,22 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
 
                 var item: CFTypeRef?
                 let status = SecItemCopyMatching(keyQuery as CFDictionary, &item)
-                if status == errSecSuccess, let keyData = item as? Data, let decryptedToken = self.decryptToken(encryptedToken: encryptedTokenData, with: keyData) {
-                    resolve(decryptedToken)
+                if status == errSecSuccess, let keyData = item as? Data {
+                    print("Symmetric key retrieved successfully")
+
+                    if let decryptedToken = self.decryptToken(encryptedToken: encryptedTokenData, with: keyData) {
+                        print("Token decrypted successfully: \(decryptedToken)")
+                        resolve(decryptedToken)
+                    } else {
+                        print("Token decryption failed")
+                        reject("Decryption_Error", "Failed to decrypt the token", nil)
+                    }
                 } else {
+                    print("Failed to retrieve symmetric key, Status: \(status)")
                     reject("Keychain_Error", "Could not retrieve symmetric key", NSError(domain: NSOSStatusErrorDomain, code: Int(status)))
                 }
             } else {
-                // Handle the error
+                print("Biometric authentication failed, Error: \(String(describing: evaluateError))")
                 if let error = evaluateError as NSError? {
                     reject("Authentication_Error", "Authentication failed", error)
                 }
@@ -82,6 +98,7 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
         }
     }
 }
+
 
 
 @objc(showBiometricPromptForEncryption:resolver:rejecter:)
