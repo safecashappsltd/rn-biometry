@@ -124,35 +124,32 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
                 let encryptedTokenBase64 = encryptedToken.base64EncodedString()
                 print("Encrypted Token: \(encryptedTokenBase64)")
 
-                // Store the symmetric key in the keychain
-                let keyQuery: [String: Any] = [
-                    kSecClass as String: kSecClassGenericPassword,
-                    kSecAttrService as String: "YourService",
-                    kSecAttrAccount as String: "SymmetricKey",
-                    kSecValueData as String: symmetricKey
-                ]
+let keyQuery: [String: Any] = [
+    kSecClass as String: kSecClassGenericPassword,
+    kSecAttrService as String: "YourService",
+    kSecAttrAccount as String: "SymmetricKey"
+]
 
-                let keychainAddResult = SecItemAdd(keyQuery as CFDictionary, nil)
-                if keychainAddResult == errSecDuplicateItem {
-                    // Update existing keychain item
-                    let updateQuery: [String: Any] = [
-                        kSecClass as String: kSecClassGenericPassword,
-                        kSecAttrService as String: "YourService",
-                        kSecAttrAccount as String: "SymmetricKey"
-                    ]
-                    let updateResult = SecItemUpdate(updateQuery as CFDictionary, keyQuery as CFDictionary)
-                    print("Keychain update result: \(updateResult)")
+let updateFields: [String: Any] = [
+    kSecValueData as String: symmetricKey
+]
 
-                    if updateResult == errSecSuccess {
-                        resolve(encryptedTokenBase64)
-                    } else {
-                        reject("Keychain_Update_Error", "Failed to update symmetric key in keychain", nil)
-                    }
-                } else if keychainAddResult == errSecSuccess {
-                    resolve(encryptedTokenBase64)
-                } else {
-                    reject("Keychain_Error", "Failed to store symmetric key in keychain", nil)
-                }
+let keychainAddResult = SecItemAdd(keyQuery as CFDictionary, nil)
+if keychainAddResult == errSecDuplicateItem {
+    // Update existing keychain item
+    let updateResult = SecItemUpdate(keyQuery as CFDictionary, updateFields as CFDictionary)
+    print("Keychain update result: \(updateResult)")
+
+    if updateResult == errSecSuccess {
+        resolve(encryptedTokenBase64)
+    } else {
+        reject("Keychain_Update_Error", "Failed to update symmetric key in keychain", nil)
+    }
+} else if keychainAddResult == errSecSuccess {
+    resolve(encryptedTokenBase64)
+} else {
+    reject("Keychain_Error", "Failed to store symmetric key in keychain", nil)
+}
             } else {
                 // Handle the error
                 if let error = evaluateError as NSError? {
