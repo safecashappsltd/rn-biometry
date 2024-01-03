@@ -41,11 +41,17 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
     let context = LAContext()
     context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
 
-    guard let encryptedTokenData = params["encryptedToken"] as? Data else {
-        print("Encrypted token parameter missing")
-        reject("Parameter_Error", "Encrypted token not found in parameters", nil)
-        return
-    }
+guard let encryptedTokenString = params["encryptedToken"] as? String else {
+    print("Encrypted token parameter missing")
+    reject("Parameter_Error", "Encrypted token not found in parameters", nil)
+    return
+}
+
+guard let encryptedTokenData = Data(base64Encoded: encryptedTokenString) else {
+    print("Failed to convert encrypted token to Data")
+    reject("Parameter_Error", "Encrypted token conversion failed", nil)
+    return
+}
 
     print("Received encrypted token")
 
