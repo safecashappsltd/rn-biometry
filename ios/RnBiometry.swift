@@ -84,7 +84,7 @@ func showBiometricPromptForDecryption(params: NSDictionary, resolve: @escaping R
 }
 
 
-  @objc(showBiometricPromptForEncryption:resolver:rejecter:)
+@objc(showBiometricPromptForEncryption:resolver:rejecter:)
 func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     let context = LAContext()
     context.localizedCancelTitle = params["cancelButtonText"] as? String ?? "Cancel"
@@ -131,16 +131,27 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
                     kSecAttrAccount as String: "SymmetricKey",
                     kSecValueData as String: symmetricKey
                 ]
-                SecItemAdd(keyQuery as CFDictionary, nil)
 
-                let keychainResult = SecItemAdd(keyQuery as CFDictionary, nil)
-               print("Keychain add result: \(keychainResult)")
+                let keychainAddResult = SecItemAdd(keyQuery as CFDictionary, nil)
+                if keychainAddResult == errSecDuplicateItem {
+                    // Update existing keychain item
+                    let updateQuery: [String: Any] = [
+                        kSecClass as String: kSecClassGenericPassword,
+                        kSecAttrService as String: "YourService",
+                        kSecAttrAccount as String: "SymmetricKey"
+                    ]
+                    let updateResult = SecItemUpdate(updateQuery as CFDictionary, keyQuery as CFDictionary)
+                    print("Keychain update result: \(updateResult)")
 
-               if keychainResult == errSecSuccess {
-                    // Return the Base64 encoded encrypted token to JavaScript
-                   resolve(encryptedTokenBase64)
-              } else {
-             reject("Keychain_Error", "Failed to store symmetric key in keychain", nil)
+                    if updateResult == errSecSuccess {
+                        resolve(encryptedTokenBase64)
+                    } else {
+                        reject("Keychain_Update_Error", "Failed to update symmetric key in keychain", nil)
+                    }
+                } else if keychainAddResult == errSecSuccess {
+                    resolve(encryptedTokenBase64)
+                } else {
+                    reject("Keychain_Error", "Failed to store symmetric key in keychain", nil)
                 }
             } else {
                 // Handle the error
@@ -151,6 +162,7 @@ func showBiometricPromptForEncryption(params: NSDictionary, resolve: @escaping R
         }
     }
 }
+
 
 //     private func generateSymmetricKey() -> Data {
 //     let key = SymmetricKey(size: .bits256) // Generates a 256-bit key
